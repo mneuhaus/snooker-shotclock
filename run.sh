@@ -6,12 +6,23 @@ cd "$SCRIPT_DIR"
 # Log file
 LOG_FILE="$SCRIPT_DIR/autostart.log"
 
+# Setup environment for cron (no X11/Audio by default)
+export DISPLAY=${DISPLAY:-:0}
+export XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}
+
+# PulseAudio environment
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+export PULSE_RUNTIME_PATH=/run/user/$(id -u)/pulse
+export PULSE_SERVER=unix:/run/user/$(id -u)/pulse/native
+
 # Log start
 echo "=== $(date) ===" >> "$LOG_FILE"
 echo "Starting Snooker Shot Clock..." >> "$LOG_FILE"
 echo "DISPLAY=$DISPLAY" >> "$LOG_FILE"
 echo "USER=$USER" >> "$LOG_FILE"
 echo "PWD=$PWD" >> "$LOG_FILE"
+echo "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" >> "$LOG_FILE"
+echo "PULSE_SERVER=$PULSE_SERVER" >> "$LOG_FILE"
 
 # Check for virtual environment in multiple locations
 if [ -f "venv/bin/activate" ]; then
