@@ -13,12 +13,32 @@ echo "DISPLAY=$DISPLAY" >> "$LOG_FILE"
 echo "USER=$USER" >> "$LOG_FILE"
 echo "PWD=$PWD" >> "$LOG_FILE"
 
-# Activate virtual environment if it exists
+# Check for virtual environment in multiple locations
 if [ -f "venv/bin/activate" ]; then
     source venv/bin/activate
-    echo "Virtual environment activated" >> "$LOG_FILE"
+    echo "Virtual environment activated: venv/" >> "$LOG_FILE"
+elif [ -f "$HOME/venv/bin/activate" ]; then
+    source "$HOME/venv/bin/activate"
+    echo "Virtual environment activated: $HOME/venv/" >> "$LOG_FILE"
+elif [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
+    echo "Virtual environment activated: .venv/" >> "$LOG_FILE"
+else
+    echo "No virtual environment found, using system Python" >> "$LOG_FILE"
 fi
 
+# Find the correct Python with pygame
+PYTHON_CMD="python3"
+for py in python3.11 python3.9 python3.7 python3; do
+    if command -v $py &> /dev/null; then
+        if $py -c "import pygame" 2>/dev/null; then
+            PYTHON_CMD=$py
+            echo "Found Python with pygame: $PYTHON_CMD" >> "$LOG_FILE"
+            break
+        fi
+    fi
+done
+
 # Run the application (redirect output to log)
-echo "Executing: python3 main.py" >> "$LOG_FILE"
-python3 main.py "$@" >> "$LOG_FILE" 2>&1
+echo "Executing: $PYTHON_CMD main.py" >> "$LOG_FILE"
+$PYTHON_CMD main.py "$@" >> "$LOG_FILE" 2>&1
