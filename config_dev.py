@@ -44,3 +44,5 @@ SHOW_LED_INDICATORS = True  # Show LED circles in UI for testing
 SOUND_ENABLED = True  # Sound effects enabled
 SOUND_VOLUME = 0.7   # Volume level (0.0 - 1.0)
 TTS_ENABLED = True   # Text-to-Speech (uses macOS voices on Mac)
+TTS_VOICE = 'en-gb+f3'  # espeak voice (not used on macOS)
+TTS_SPEED = 175      # Speech rate in WPM (not used on macOS)

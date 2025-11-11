@@ -97,8 +97,9 @@ class AudioSystem:
                 
                 if self.use_espeak_direct:
                     # Direct espeak call (fallback for Raspberry Pi)
+                    # Use configured voice and speed
                     subprocess.run(
-                        ['espeak', '-s', '175', message],
+                        ['espeak', '-v', config.TTS_VOICE, '-s', str(config.TTS_SPEED), message],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL
                     )

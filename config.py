@@ -42,3 +42,5 @@ SHOW_LED_INDICATORS = False  # LED circles in UI disabled (use physical LEDs)
 SOUND_ENABLED = True  # Sound effects enabled
 SOUND_VOLUME = 0.7   # Volume level (0.0 - 1.0)
 TTS_ENABLED = True   # Text-to-Speech announcements (espeak on Raspberry Pi)
+TTS_VOICE = 'en-gb+f3'  # espeak voice: en-gb (male), en-gb+f3 (female), en-us+f3 (female US)
+TTS_SPEED = 175      # Speech rate in words per minute (150-200 recommended)
