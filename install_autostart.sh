@@ -16,10 +16,10 @@ echo "Cleaning up old autostart entries..."
 crontab -l 2>/dev/null | grep -v "snooker-shotclock\|${SCRIPT_DIR}/run.sh" | crontab - 2>/dev/null || true
 rm -f ~/.config/autostart/snooker-shotclock.desktop 2>/dev/null || true
 
-# Add cron entry
+# Add cron entry with PulseAudio support
 echo "Installing autostart (cron @reboot)..."
 (crontab -l 2>/dev/null; echo "# Snooker Shot Clock") | crontab -
-(crontab -l 2>/dev/null; echo "@reboot sleep 30 && DISPLAY=:0 ${SCRIPT_DIR}/run.sh") | crontab -
+(crontab -l 2>/dev/null; echo "@reboot sleep 30 && export DISPLAY=:0 && export PULSE_RUNTIME_PATH=/run/user/\$(id -u)/pulse && ${SCRIPT_DIR}/run.sh") | crontab -
 
 echo ""
 echo "======================================"
