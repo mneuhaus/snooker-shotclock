@@ -47,6 +47,7 @@ pip3 install pyttsx3
 |------|---------|
 | Run app | `python3 main.py` |
 | Update code | `git pull` |
+| Test resolution | `python3 test_resolution.py` |
 | Test LED | `python3 -c "from gpiozero import LED; led = LED(17); led.on(); input('Press enter'); led.off()"` |
 | Test TTS | `espeak "Testing"` |
 | Check logs | `journalctl -u shotclock -f` (if using systemd) |
@@ -136,6 +137,30 @@ sudo systemctl start shotclock.service
 ---
 
 ## 🐛 Troubleshooting Quick Fixes
+
+### UI looks too small/large or misaligned
+
+The UI is now responsive and scales automatically. To check your resolution:
+
+```bash
+python3 test_resolution.py
+```
+
+This shows:
+- Your actual screen resolution
+- Scale factor being used
+- Calculated font and button sizes
+
+The UI is designed for 1920x1080 and scales proportionally. Common Raspberry Pi resolutions:
+- 1920x1080 (Full HD) - Scale 1.0
+- 1280x720 (HD) - Scale 0.67
+- 1024x768 (Old monitors) - Scale 0.53
+
+If layout still looks wrong, check `config.py`:
+```python
+SCREEN_WIDTH = 1920  # Should match your actual resolution
+SCREEN_HEIGHT = 1080
+```
 
 ### Screen is blank
 ```bash
