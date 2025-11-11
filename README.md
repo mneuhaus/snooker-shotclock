@@ -22,6 +22,26 @@ Eine pygame-basierte Shot Clock für Snooker-Frames mit LED-Anzeigen und Bluetoo
 
 ## Installation
 
+### Raspberry Pi (Recommended)
+
+**Quick Install:**
+```bash
+git clone https://github.com/mneuhaus/snooker-shotclock.git
+cd snooker-shotclock
+./install_rpi.sh
+```
+
+The script will automatically:
+- Install all SDL2 libraries (fixes pygame issues)
+- Install Python dependencies
+- Configure GPIO and fullscreen mode
+- Setup everything for Raspberry Pi
+
+**Manual Install:**
+See [docs/RASPBERRY_PI_SETUP.md](docs/RASPBERRY_PI_SETUP.md) for detailed instructions.
+
+### Desktop (Development)
+
 ```bash
 # Virtual Environment erstellen (empfohlen: Python 3.11 oder 3.12)
 python3.11 -m venv venv  # oder python3.12
@@ -29,12 +49,19 @@ source venv/bin/activate  # Auf Windows: venv\Scripts\activate
 
 # Abhängigkeiten installieren
 pip install -r requirements.txt
-
-# Für Raspberry Pi GPIO-Unterstützung (automatisch in requirements.txt)
-# Wird nur auf ARM-Systemen installiert
 ```
 
 **Hinweis**: Python 3.14 hat derzeit Kompatibilitätsprobleme mit pygame 2.6.1. Bitte Python 3.11 oder 3.12 verwenden.
+
+### Common Issues
+
+**SDL2_ttf Error on Raspberry Pi:**
+```bash
+sudo apt install -y libsdl2-ttf-2.0-0 libsdl2-image-2.0-0 libsdl2-mixer-2.0-0
+pip3 install pygame --no-cache-dir
+```
+
+See [docs/RASPBERRY_PI_SETUP.md](docs/RASPBERRY_PI_SETUP.md) for more troubleshooting.
 
 ## Konfiguration
 

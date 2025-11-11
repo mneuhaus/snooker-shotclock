@@ -8,9 +8,21 @@ sudo apt update
 sudo apt upgrade
 ```
 
-2. **Install Dependencies**
+2. **Install System Dependencies**
 ```bash
-sudo apt install python3-pip python3-pygame python3-gpiozero espeak -y
+# Install required system libraries
+sudo apt install -y \
+    python3-pip \
+    python3-gpiozero \
+    espeak \
+    libsdl2-dev \
+    libsdl2-image-dev \
+    libsdl2-mixer-dev \
+    libsdl2-ttf-dev \
+    libfreetype6-dev \
+    libportmidi-dev \
+    libjpeg-dev \
+    python3-numpy
 ```
 
 3. **Clone Repository**
@@ -21,7 +33,12 @@ cd snooker-shotclock
 
 4. **Install Python Packages**
 ```bash
+# Install pygame and other dependencies
 pip3 install -r requirements.txt
+
+# If pygame fails, try installing from system package:
+# sudo apt install python3-pygame
+# pip3 install pyttsx3
 ```
 
 ## Configuration
@@ -77,6 +94,38 @@ sudo systemctl start shotclock.service
 ```
 
 ## Troubleshooting
+
+### SDL2_ttf Error: "libSDL2_ttf-2.0.so.0: cannot open shared object file"
+
+This error means the SDL2 TTF library is missing. This is the **most common error** on fresh Raspberry Pi installations.
+
+**Solution: Install SDL2 libraries**
+```bash
+sudo apt install -y libsdl2-ttf-2.0-0 libsdl2-image-2.0-0 libsdl2-mixer-2.0-0
+```
+
+If that doesn't work, install the full development packages:
+```bash
+sudo apt install -y \
+    libsdl2-dev \
+    libsdl2-image-dev \
+    libsdl2-mixer-dev \
+    libsdl2-ttf-dev \
+    libfreetype6-dev
+```
+
+Then reinstall pygame:
+```bash
+pip3 uninstall pygame
+pip3 install pygame --no-cache-dir
+```
+
+**Alternative: Use system pygame package**
+```bash
+pip3 uninstall pygame
+sudo apt install python3-pygame
+pip3 install pyttsx3  # Still need this for TTS
+```
 
 ### NEON Warning: "system is neon capable but pygame not compiled"
 
