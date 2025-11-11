@@ -9,22 +9,28 @@ import config
 class Button:
     """A clickable button"""
     
-    def __init__(self, x, y, width, height, text):
+    def __init__(self, x, y, width, height, text, scale=1.0):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.is_hovered = False
+        self.scale = scale
+        self.border_radius = int(20 * scale)
+        self.border_width = max(3, int(5 * scale))
         
     def draw(self, screen, font):
         """Draw the button"""
         color = config.COLOR_BUTTON_HOVER if self.is_hovered else config.COLOR_BUTTON
         
         # Draw rounded rectangle background
-        pygame.draw.rect(screen, color, self.rect, border_radius=20)
-        pygame.draw.rect(screen, config.COLOR_BUTTON_BORDER, self.rect, 5, border_radius=20)
+        pygame.draw.rect(screen, color, self.rect, border_radius=self.border_radius)
+        pygame.draw.rect(screen, config.COLOR_BUTTON_BORDER, self.rect, 
+                        self.border_width, border_radius=self.border_radius)
         
         # Draw text with proper padding and spacing
         lines = self.text.split('\n')
-        line_height = 65  # Increased from 50 to 65 for better spacing
+        # Get actual text height from font for better spacing
+        text_rect_sample = font.get_rect(lines[0] if lines else "A")
+        line_height = int(text_rect_sample.height * 1.4)  # 40% padding between lines
         total_height = len(lines) * line_height
         y_offset = self.rect.centery - total_height // 2 + line_height // 2
         
@@ -44,39 +50,51 @@ class Button:
 
 
 class UI:
-    """Main UI renderer"""
+    """Main UI renderer with responsive layout"""
     
     def __init__(self, screen):
         self.screen = screen
         self.width = screen.get_width()
         self.height = screen.get_height()
         
+        # Calculate responsive sizes based on screen dimensions
+        # Scale factor: how much to scale relative to 1920x1080 reference
+        self.scale = min(self.width / 1920, self.height / 1080)
+        
+        print(f"Screen: {self.width}x{self.height}, Scale factor: {self.scale:.2f}")
+        
         # Initialize fonts using freetype (more stable)
         pygame.freetype.init()
-        # Optimized font sizes for 2/3 layout
-        self.font_frame_timer = pygame.freetype.SysFont(None, 380)  # Smaller for 2/3 width
-        self.font_shot_timer = pygame.freetype.SysFont(None, 700)   # Big for 1/3 width
-        self.font_button = pygame.freetype.SysFont(None, 70)        # Bigger buttons
-        self.font_hint = pygame.freetype.SysFont(None, 45)
+        
+        # Font sizes scale with screen size (based on 1920x1080 reference)
+        # These are the base sizes at 1920x1080, they will scale down/up automatically
+        self.font_frame_timer = pygame.freetype.SysFont(None, int(380 * self.scale))
+        self.font_shot_timer = pygame.freetype.SysFont(None, int(700 * self.scale))
+        self.font_button = pygame.freetype.SysFont(None, int(70 * self.scale))
+        self.font_hint = pygame.freetype.SysFont(None, int(45 * self.scale))
+        
+        print(f"Font sizes - Frame: {int(380 * self.scale)}, Shot: {int(700 * self.scale)}, Button: {int(70 * self.scale)}")
         
         # Load logo first to calculate layout
         logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'SFW-Logo.png')
-        self.logo_size = 280  # Bigger logo
+        self.logo_size = int(280 * self.scale)  # Responsive logo size
         try:
             self.logo = pygame.image.load(logo_path)
             # Scale logo to match button size
             self.logo = pygame.transform.smoothscale(self.logo, (self.logo_size, self.logo_size))
-            print(f"Logo loaded from {logo_path}")
+            print(f"Logo loaded from {logo_path}, size: {self.logo_size}x{self.logo_size}")
         except Exception as e:
             print(f"Failed to load logo: {e}")
             self.logo = None
         
-        # Create buttons with layout: [Start] [Logo] [Reset] - LEFT ALIGNED
-        # Buttons + Logo should take ~2/3 of screen width
-        button_width = 220   # Bigger buttons
-        button_height = 220
-        button_margin = 30
-        spacing = 40  # Space between elements
+        # Create buttons with responsive layout: [Start] [Logo] [Reset] - LEFT ALIGNED
+        # All sizes are relative to screen dimensions for perfect scaling
+        button_width = int(self.width * 0.11)    # ~11% of screen width
+        button_height = int(self.height * 0.20)  # ~20% of screen height
+        button_margin = int(self.width * 0.015)  # ~1.5% margin from edges
+        spacing = int(self.width * 0.02)         # ~2% spacing between elements
+        
+        print(f"Button size: {button_width}x{button_height}, margin: {button_margin}, spacing: {spacing}")
         
         # Left-aligned layout (not centered)
         start_x = button_margin
@@ -84,7 +102,8 @@ class UI:
         self.button_start = Button(
             start_x, button_margin,
             button_width, button_height,
-            "Start\nFrame"
+            "Start\nFrame",
+            scale=self.scale
         )
         
         # Logo position (between buttons)
@@ -95,7 +114,8 @@ class UI:
         self.button_reset = Button(
             self.logo_x + self.logo_size + spacing, button_margin,
             button_width, button_height,
-            "Reset\nFrame"
+            "Reset\nFrame",
+            scale=self.scale
         )
         
     def draw_logo(self):
@@ -114,18 +134,18 @@ class UI:
             pygame.draw.circle(self.screen, (100, 150, 200), (center_x, center_y), radius)
             pygame.draw.circle(self.screen, config.COLOR_TEXT, (center_x, center_y), radius, 4)
             
-            logo_font = pygame.freetype.SysFont(None, 60)
+            logo_font = pygame.freetype.SysFont(None, int(60 * self.scale))
             text_rect = logo_font.get_rect("LOGO")
             text_rect.center = (center_x, center_y)
             logo_font.render_to(self.screen, text_rect, "LOGO", config.COLOR_TEXT)
     
     def draw_led_indicators(self, timer_state):
         """Draw 5 LED circles for countdown visualization"""
-        # Position: top center, right of "Press Shot Timer to reset" text
-        led_size = 30  # Diameter of each LED
-        led_spacing = 10  # Space between LEDs
-        start_x = self.width - 450
-        start_y = 100
+        # Position: top right area, responsive sizing
+        led_size = int(30 * self.scale)      # Responsive LED size
+        led_spacing = int(10 * self.scale)   # Responsive spacing
+        start_x = int(self.width - (450 * self.scale))
+        start_y = int(100 * self.scale)
         
         # Calculate how many LEDs should be lit based on shot time
         shot_time = math.ceil(timer_state.shot_time_remaining)
@@ -152,7 +172,8 @@ class UI:
             # Draw LED circle
             pygame.draw.circle(self.screen, color, (x + led_size//2, y), led_size//2)
             # Draw border
-            pygame.draw.circle(self.screen, (255, 255, 255), (x + led_size//2, y), led_size//2, 2)
+            border_width = max(1, int(2 * self.scale))
+            pygame.draw.circle(self.screen, (255, 255, 255), (x + led_size//2, y), led_size//2, border_width)
         
     def draw(self, timer_state):
         """Draw the entire UI"""
@@ -170,13 +191,13 @@ class UI:
         # Draw logo
         self.draw_logo()
         
-        # Draw LED countdown indicators (5 circles, top center)
+        # Draw LED countdown indicators (5 circles, top right)
         self.draw_led_indicators(timer_state)
         
         # Draw hint text - only middle mouse button hint
         hint_middle = "Hold middle mouse button while balls rolling"
         hint_middle_rect = self.font_hint.get_rect(hint_middle)
-        hint_middle_rect.midbottom = (self.width // 2, self.height - 40)
+        hint_middle_rect.midbottom = (self.width // 2, int(self.height - (40 * self.scale)))
         self.font_hint.render_to(self.screen, hint_middle_rect, hint_middle, config.COLOR_TEXT)
         
         # Define precise layout areas with clear boundary
@@ -212,12 +233,12 @@ class UI:
         # Draw "Balls Rolling" indicator when middle mouse is held
         if timer_state.balls_rolling:
             rolling_text = "BALLS ROLLING - Timer Paused"
-            rolling_font = pygame.freetype.SysFont(None, 50)
+            rolling_font = pygame.freetype.SysFont(None, int(50 * self.scale))
             rolling_rect = rolling_font.get_rect(rolling_text)
-            rolling_rect.center = (self.width // 2, self.height // 2 + 200)
+            rolling_rect.center = (self.width // 2, int(self.height // 2 + (200 * self.scale)))
             
             # Draw semi-transparent background
-            padding = 30
+            padding = int(30 * self.scale)
             overlay = pygame.Surface((rolling_rect.width + padding * 2, rolling_rect.height + padding))
             overlay.set_alpha(220)
             overlay.fill((40, 40, 40))
