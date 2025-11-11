@@ -52,6 +52,7 @@ class AudioSystem:
             
         self.last_second = None  # Track which second we're at for beeps
         self.shot_expired_played = False  # Track if we played the expiry sound
+        self.frame_expired_played = False  # Track if we played frame expiry sound
         self.announced_15s = False  # Track if we announced 15s
         self.announced_10s = False  # Track if we announced 10s
         
@@ -75,11 +76,14 @@ class AudioSystem:
     
     def update(self, timer_state):
         """Update audio based on timer state"""
-        if not self.enabled or timer_state.state.value != "running":
-            # Reset announcement flags when not running
-            if timer_state.state.value != "running":
-                self.announced_15s = False
-                self.announced_10s = False
+        if not self.enabled:
+            return
+            
+        # Reset announcement flags when not running
+        if timer_state.state.value != "running":
+            self.announced_15s = False
+            self.announced_10s = False
+            self.frame_expired_played = False
             return
         
         # Check for shot clock announcements at frame start
@@ -92,6 +96,13 @@ class AudioSystem:
         if not self.announced_10s and timer_state.frame_time_remaining <= config.FIRST_HALF_DURATION:
             self.announce_shot_clock(10)
             self.announced_10s = True
+        
+        # Play ZONK when frame time expires (10 minutes up)
+        if timer_state.frame_time_remaining <= 0 and not self.frame_expired_played:
+            print("Frame time expired! Playing zonk")
+            self._play_zonk()
+            self.frame_expired_played = True
+            return
         
         # Don't play sounds while balls are rolling
         if timer_state.balls_rolling:

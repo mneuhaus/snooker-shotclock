@@ -17,7 +17,7 @@ COLOR_CRITICAL = (255, 0, 0)     # Rot für kritische Zeit
 
 # Timer settings (in seconds)
 FRAME_DURATION = 10 * 60  # 10 Minuten
-FIRST_HALF_DURATION = 20  # Erste 5 Minuten
+FIRST_HALF_DURATION = 5 * 60  # Erste 5 Minuten
 SHOT_TIME_FIRST_HALF = 15  # 15 Sekunden in erster Hälfte
 SHOT_TIME_SECOND_HALF = 10  # 10 Sekunden in zweiter Hälfte
 
