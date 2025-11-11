@@ -65,12 +65,18 @@ See [docs/RASPBERRY_PI_SETUP.md](docs/RASPBERRY_PI_SETUP.md) for more troublesho
 
 ## Konfiguration
 
-Passe `config.py` an:
+Die `config.py` ist bereits für Raspberry Pi konfiguriert:
 
-- `FULLSCREEN`: True/False für Vollbildmodus
-- `USE_GPIO`: True für Raspberry Pi LED-Steuerung
-- `LED_PINS`: GPIO-Pin-Nummern anpassen
-- Timer-Einstellungen nach Bedarf anpassen
+- `FULLSCREEN = True` - Vollbildmodus
+- `USE_GPIO = True` - GPIO aktiviert für LEDs und Buttons
+- `SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 800` - Optimiert für typische Pi-Displays
+- `TTS_ENABLED = True` - Sprachausgabe aktiviert
+
+**Für Desktop-Entwicklung:**
+Kopiere `config_dev.py` zu `config.py`:
+```bash
+cp config_dev.py config.py
+```
 
 ## Verwendung
 

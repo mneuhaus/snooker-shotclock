@@ -1,9 +1,11 @@
-"""Configuration for Snooker Shot Clock"""
+"""Development Configuration for Desktop/Mac
+Copy this to config.py for development on non-Raspberry Pi systems
+"""
 
-# Display settings
+# Display settings (Windowed for development)
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 800
-FULLSCREEN = True  # Fullscreen mode for Raspberry Pi
+FULLSCREEN = False  # Windowed mode for development
 FPS = 60
 
 # Colors
@@ -25,20 +27,20 @@ SHOT_TIME_SECOND_HALF = 10  # 10 Sekunden in zweiter Hälfte
 SHOT_WARNING_TIME = 5  # Warnung bei 5 Sekunden
 SHOT_CRITICAL_TIME = 3  # Kritisch bei 3 Sekunden
 
-# GPIO settings (Raspberry Pi)
-USE_GPIO = True  # GPIO enabled for Raspberry Pi (LEDs and Buttons)
+# GPIO settings (Disabled for development)
+USE_GPIO = False  # No GPIO on desktop
 
-# LED Output Pins (5 LEDs für Countdown-Anzeige)
-LED_PINS = [17, 27, 22, 23, 24]  # GPIO Pins für 5 LEDs
+# LED Output Pins (not used on desktop)
+LED_PINS = [17, 27, 22, 23, 24]
 
-# Button Input Pins (physische Buttons)
-BUTTON_START_PIN = 5   # GPIO Pin für Start Frame Button
-BUTTON_RESET_PIN = 6   # GPIO Pin für Reset Frame Button
+# Button Input Pins (not used on desktop)
+BUTTON_START_PIN = 5
+BUTTON_RESET_PIN = 6
 
 # UI settings
-SHOW_LED_INDICATORS = False  # LED circles in UI disabled (use physical LEDs)
+SHOW_LED_INDICATORS = True  # Show LED circles in UI for testing
 
 # Audio settings
 SOUND_ENABLED = True  # Sound effects enabled
 SOUND_VOLUME = 0.7   # Volume level (0.0 - 1.0)
-TTS_ENABLED = True   # Text-to-Speech announcements (espeak on Raspberry Pi)
+TTS_ENABLED = True   # Text-to-Speech (uses macOS voices on Mac)
