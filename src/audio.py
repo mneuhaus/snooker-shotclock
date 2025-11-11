@@ -3,6 +3,8 @@ import pygame
 import os
 import math
 import threading
+import subprocess
+import platform
 import config
 
 try:
@@ -34,46 +36,48 @@ class AudioSystem:
         
         # Initialize TTS
         self.tts_engine = None
+        self.use_espeak_direct = False  # Fallback to direct espeak calls
+        
         if TTS_AVAILABLE and self.enabled and config.TTS_ENABLED:
             try:
-                self.tts_engine = pyttsx3.init()
+                # Try to initialize with espeak driver on Linux
+                if platform.system() == 'Linux':
+                    try:
+                        self.tts_engine = pyttsx3.init('espeak', debug=False)
+                        print("TTS: Initialized with espeak driver")
+                    except Exception as e:
+                        print(f"TTS: espeak driver failed ({e}), using default")
+                        self.tts_engine = pyttsx3.init(debug=False)
+                else:
+                    self.tts_engine = pyttsx3.init(debug=False)
                 
-                # On Raspberry Pi with espeak, don't try to set voice
-                # Just use default and only configure rate
-                # This avoids the "SetVoiceByName failed" error
-                
-                # List available voices for debugging
-                voices = self.tts_engine.getProperty('voices')
-                if voices:
-                    print(f"TTS: {len(voices)} voices available")
-                    for voice in voices[:3]:  # Show first 3
-                        print(f"  - {voice.name} (ID: {voice.id})")
-                
-                # Don't set voice on Linux/Raspberry Pi - use default
-                # Setting voice causes "SetVoiceByName failed" error with espeak
-                print("TTS: Using default system voice (espeak)")
+                # Don't list or set voices - this causes errors on Raspberry Pi
+                print("TTS: Using default system voice")
                 
                 # Set speech rate (words per minute)
-                # espeak on Raspberry Pi uses different scale than macOS
                 try:
                     current_rate = self.tts_engine.getProperty('rate')
-                    # Increase by 15%
                     new_rate = int(current_rate * 1.15)
                     self.tts_engine.setProperty('rate', new_rate)
-                    print(f"TTS rate: {current_rate} → {new_rate} WPM")
+                    print(f"TTS: Rate set to {new_rate} WPM")
                 except Exception as e:
-                    # Fallback if rate property fails
-                    print(f"TTS rate adjustment failed: {e}")
-                    try:
-                        self.tts_engine.setProperty('rate', 175)
-                        print("TTS rate set to: 175 WPM (fallback)")
-                    except:
-                        print("TTS using default rate")
+                    print(f"TTS: Using default rate ({e})")
                 
-                print("TTS initialized successfully")
+                print("TTS: Initialized successfully")
+                
             except Exception as e:
-                print(f"Failed to initialize TTS: {e}")
+                print(f"TTS: pyttsx3 failed ({e})")
                 self.tts_engine = None
+                
+                # Fallback: Check if espeak is available directly
+                if platform.system() == 'Linux':
+                    try:
+                        result = subprocess.run(['which', 'espeak'], capture_output=True)
+                        if result.returncode == 0:
+                            self.use_espeak_direct = True
+                            print("TTS: Falling back to direct espeak calls")
+                    except:
+                        print("TTS: espeak not available")
             
         self.last_second = None  # Track which second we're at for beeps
         self.shot_expired_played = False  # Track if we played the expiry sound
@@ -83,15 +87,26 @@ class AudioSystem:
         
     def announce_shot_clock(self, seconds):
         """Announce shot clock time with TTS (run in thread to not block)"""
-        if not self.tts_engine:
+        if not self.tts_engine and not self.use_espeak_direct:
             return
             
         def speak():
             try:
                 message = f"{seconds} seconds shot clock now in operation"
                 print(f"TTS: {message}")
-                self.tts_engine.say(message)
-                self.tts_engine.runAndWait()
+                
+                if self.use_espeak_direct:
+                    # Direct espeak call (fallback for Raspberry Pi)
+                    subprocess.run(
+                        ['espeak', '-s', '175', message],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
+                    )
+                else:
+                    # Use pyttsx3
+                    self.tts_engine.say(message)
+                    self.tts_engine.runAndWait()
+                    
             except Exception as e:
                 print(f"TTS failed: {e}")
         
