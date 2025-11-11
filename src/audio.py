@@ -97,7 +97,8 @@ class AudioSystem:
             return
         
         # Track shot time for tick sounds
-        shot_time = int(timer_state.shot_time_remaining)
+        # Use ceiling to match display logic (shows 15 until it reaches 14.0)
+        shot_time = math.ceil(timer_state.shot_time_remaining)
         
         # Play tick sound every second from 5 to 1
         if shot_time <= 5 and shot_time >= 1:
