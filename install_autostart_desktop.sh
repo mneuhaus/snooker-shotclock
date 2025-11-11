@@ -41,11 +41,15 @@ cat > "${DESKTOP_FILE}" << EOF
 Type=Application
 Name=Snooker Shot Clock
 Comment=Professional Snooker Shot Clock with Timer and Announcements
-Exec=${SCRIPT_DIR}/run.sh
+Exec=sh -c 'sleep 10 && ${SCRIPT_DIR}/run.sh'
 Path=${SCRIPT_DIR}
 Terminal=false
 Hidden=false
+NoDisplay=false
 X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=10
+X-KDE-autostart-after=panel
+StartupNotify=false
 EOF
 
 echo "✅ Desktop file created: ${DESKTOP_FILE}"
