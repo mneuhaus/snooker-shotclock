@@ -64,9 +64,19 @@ python3 main.py
 ```
 
 ### Auto-start on Boot
-Create systemd service:
+
+**Automated (Recommended):**
 ```bash
-sudo nano /etc/systemd/system/shotclock.service
+# Install autostart service
+sudo ./install_autostart.sh
+
+# Uninstall if needed
+sudo ./uninstall_autostart.sh
+```
+
+**Manual:**
+```bash
+sudo nano /etc/systemd/system/snooker-shotclock.service
 ```
 
 Add:
@@ -89,8 +99,8 @@ WantedBy=graphical.target
 
 Enable service:
 ```bash
-sudo systemctl enable shotclock.service
-sudo systemctl start shotclock.service
+sudo systemctl enable snooker-shotclock.service
+sudo systemctl start snooker-shotclock.service
 ```
 
 ## Troubleshooting

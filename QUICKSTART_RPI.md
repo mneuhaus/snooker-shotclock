@@ -91,7 +91,32 @@ LED 5 (1s) → GPIO 24 → [220Ω] → LED → GND
 
 ## 🏁 Auto-Start on Boot
 
-### Method 1: Desktop Autostart
+### Automated Installation (Recommended)
+
+```bash
+# Install autostart service
+sudo ./install_autostart.sh
+
+# Uninstall autostart service
+sudo ./uninstall_autostart.sh
+```
+
+The install script will:
+- Create a systemd service
+- Enable autostart on boot
+- Configure correct user and display
+- Add automatic restart on failure
+
+**Useful commands after installation:**
+```bash
+sudo systemctl start snooker-shotclock      # Start now
+sudo systemctl stop snooker-shotclock       # Stop service
+sudo systemctl restart snooker-shotclock    # Restart service
+sudo systemctl status snooker-shotclock     # Check status
+sudo journalctl -u snooker-shotclock -f     # View logs (live)
+```
+
+### Manual Method: Desktop Autostart (Alternative)
 ```bash
 mkdir -p ~/.config/autostart
 nano ~/.config/autostart/shotclock.desktop
@@ -103,35 +128,6 @@ Add this content:
 Type=Application
 Name=Snooker Shot Clock
 Exec=/home/pi/snooker-shotclock/run.sh
-```
-
-### Method 2: Systemd Service (Advanced)
-```bash
-sudo nano /etc/systemd/system/shotclock.service
-```
-
-Add this content:
-```ini
-[Unit]
-Description=Snooker Shot Clock
-After=graphical.target
-
-[Service]
-Type=simple
-User=pi
-WorkingDirectory=/home/pi/snooker-shotclock
-Environment="DISPLAY=:0"
-ExecStart=/usr/bin/python3 /home/pi/snooker-shotclock/main.py
-Restart=always
-
-[Install]
-WantedBy=graphical.target
-```
-
-Enable the service:
-```bash
-sudo systemctl enable shotclock.service
-sudo systemctl start shotclock.service
 ```
 
 ---
