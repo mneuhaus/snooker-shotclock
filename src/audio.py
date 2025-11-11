@@ -2,11 +2,19 @@
 import pygame
 import os
 import math
+import threading
 import config
+
+try:
+    import pyttsx3
+    TTS_AVAILABLE = True
+except ImportError:
+    TTS_AVAILABLE = False
+    print("pyttsx3 not available - TTS disabled")
 
 
 class AudioSystem:
-    """Manages sound effects"""
+    """Manages sound effects and text-to-speech"""
     
     def __init__(self):
         self.enabled = config.SOUND_ENABLED
@@ -23,14 +31,67 @@ class AudioSystem:
             except Exception as e:
                 print(f"Failed to load zonk sound: {e}")
                 self.zonk_sound = None
+        
+        # Initialize TTS
+        self.tts_engine = None
+        if TTS_AVAILABLE and self.enabled:
+            try:
+                self.tts_engine = pyttsx3.init()
+                # Set Moira voice (Irish English)
+                voices = self.tts_engine.getProperty('voices')
+                for voice in voices:
+                    if 'moira' in voice.name.lower():
+                        self.tts_engine.setProperty('voice', voice.id)
+                        print(f"TTS voice set to: {voice.name}")
+                        break
+                self.tts_engine.setProperty('rate', 172)  # Speed (15% faster: 150 * 1.15 = 172.5)
+                print("TTS initialized")
+            except Exception as e:
+                print(f"Failed to initialize TTS: {e}")
+                self.tts_engine = None
             
         self.last_second = None  # Track which second we're at for beeps
         self.shot_expired_played = False  # Track if we played the expiry sound
+        self.announced_15s = False  # Track if we announced 15s
+        self.announced_10s = False  # Track if we announced 10s
         
+    def announce_shot_clock(self, seconds):
+        """Announce shot clock time with TTS (run in thread to not block)"""
+        if not self.tts_engine:
+            return
+            
+        def speak():
+            try:
+                message = f"{seconds} seconds shot clock now in operation"
+                print(f"TTS: {message}")
+                self.tts_engine.say(message)
+                self.tts_engine.runAndWait()
+            except Exception as e:
+                print(f"TTS failed: {e}")
+        
+        # Run in thread so it doesn't block the game
+        thread = threading.Thread(target=speak, daemon=True)
+        thread.start()
+    
     def update(self, timer_state):
         """Update audio based on timer state"""
         if not self.enabled or timer_state.state.value != "running":
+            # Reset announcement flags when not running
+            if timer_state.state.value != "running":
+                self.announced_15s = False
+                self.announced_10s = False
             return
+        
+        # Check for shot clock announcements at frame start
+        if not self.announced_15s and timer_state.frame_time_remaining > config.FIRST_HALF_DURATION:
+            # First half - 15 seconds
+            self.announce_shot_clock(15)
+            self.announced_15s = True
+        
+        # Announcement at 5 minute mark (switch to 10 seconds)
+        if not self.announced_10s and timer_state.frame_time_remaining <= config.FIRST_HALF_DURATION:
+            self.announce_shot_clock(10)
+            self.announced_10s = True
         
         # Don't play sounds while balls are rolling
         if timer_state.balls_rolling:

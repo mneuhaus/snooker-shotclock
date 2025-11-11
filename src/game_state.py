@@ -89,10 +89,10 @@ class TimerState:
                 self.shot_time_remaining = 0
             
     def get_frame_time_str(self):
-        """Get frame time as M:SS string (no leading zero for minutes)"""
+        """Get frame time as MM:SS string"""
         minutes = int(self.frame_time_remaining // 60)
         seconds = int(self.frame_time_remaining % 60)
-        return f"{minutes}:{seconds:02d}"
+        return f"{minutes:02d}:{seconds:02d}"
         
     def get_shot_time_str(self):
         """Get shot time as integer seconds string"""

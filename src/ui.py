@@ -22,9 +22,9 @@ class Button:
         pygame.draw.rect(screen, color, self.rect, border_radius=20)
         pygame.draw.rect(screen, config.COLOR_BUTTON_BORDER, self.rect, 5, border_radius=20)
         
-        # Draw text with proper padding
+        # Draw text with proper padding and spacing
         lines = self.text.split('\n')
-        line_height = 50
+        line_height = 65  # Increased from 50 to 65 for better spacing
         total_height = len(lines) * line_height
         y_offset = self.rect.centery - total_height // 2 + line_height // 2
         
@@ -173,35 +173,27 @@ class UI:
         # Draw LED countdown indicators (5 circles, top center)
         self.draw_led_indicators(timer_state)
         
-        # Draw hint texts
-        hint_top_rect = self.font_hint.get_rect("Press Shot Timer to reset")
-        hint_top_rect.topright = (self.width - 40, 40)
-        self.font_hint.render_to(self.screen, hint_top_rect, "Press Shot Timer to reset", config.COLOR_TEXT)
+        # Draw hint text - only middle mouse button hint
+        hint_middle = "Hold middle mouse button while balls rolling"
+        hint_middle_rect = self.font_hint.get_rect(hint_middle)
+        hint_middle_rect.midbottom = (self.width // 2, self.height - 40)
+        self.font_hint.render_to(self.screen, hint_middle_rect, hint_middle, config.COLOR_TEXT)
         
-        hint_bottom_rect = self.font_hint.get_rect("Press Frame Timer to pause frame")
-        hint_bottom_rect.bottomleft = (50, self.height - 40)
-        self.font_hint.render_to(self.screen, hint_bottom_rect, "Press Frame Timer to pause frame", config.COLOR_TEXT)
+        # Define precise layout areas with clear boundary
+        # Frame timer gets left 60%, Shot timer gets right 40%
+        boundary = int(self.width * 0.60)  # Clear boundary at 60%
         
-        # Define precise layout areas
-        # Left area for Frame Timer: 0 to 2/3 width
-        # Right area for Shot Timer: 2/3 to full width
-        boundary = int(self.width * 0.65)  # 65% boundary to give more space
-        
-        # Draw frame timer (LEFT area - constrained to not exceed boundary)
+        # Draw frame timer (LEFT area)
         frame_time_text = timer_state.get_frame_time_str()
         frame_rect = self.font_frame_timer.get_rect(frame_time_text)
         
-        # Position frame timer: right-aligned at 60% of screen width
-        frame_x = int(self.width * 0.30)  # Center of left area
+        # Position frame timer: centered in left area, but keep distance from boundary
+        frame_x = int(self.width * 0.25)  # 25% from left
         frame_rect.center = (frame_x, self.height // 2)
-        
-        # Make sure frame timer doesn't overlap boundary
-        if frame_rect.right > boundary - 50:
-            frame_rect.right = boundary - 50
             
         self.font_frame_timer.render_to(self.screen, frame_rect, frame_time_text, config.COLOR_TEXT)
         
-        # Draw shot timer (RIGHT area - starts after boundary)
+        # Draw shot timer (RIGHT area with more room)
         shot_time_text = timer_state.get_shot_time_str()
         
         # Change color based on time remaining
@@ -212,8 +204,8 @@ class UI:
             shot_color = config.COLOR_WARNING
             
         shot_rect = self.font_shot_timer.get_rect(shot_time_text)
-        # Position shot timer: center of right area
-        shot_x = boundary + (self.width - boundary) // 2
+        # Position shot timer: 80% from left (center of right 40% area)
+        shot_x = int(self.width * 0.80)
         shot_rect.center = (shot_x, self.height // 2)
         self.font_shot_timer.render_to(self.screen, shot_rect, shot_time_text, shot_color)
         
