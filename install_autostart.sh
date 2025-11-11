@@ -53,11 +53,15 @@ User=${USER}
 WorkingDirectory=${SCRIPT_DIR}
 Environment="DISPLAY=:0"
 Environment="XAUTHORITY=/home/${USER}/.Xauthority"
+ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/python3 ${SCRIPT_DIR}/main.py
-Restart=always
-RestartSec=3
+Restart=on-failure
+RestartSec=5
 StandardOutput=journal
 StandardError=journal
+
+# X11 permissions
+SupplementaryGroups=video
 
 [Install]
 WantedBy=graphical.target
