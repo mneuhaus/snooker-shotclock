@@ -191,8 +191,9 @@ class UI:
         # Draw logo
         self.draw_logo()
         
-        # Draw LED countdown indicators (5 circles, top right)
-        self.draw_led_indicators(timer_state)
+        # Draw LED countdown indicators (5 circles, top right) - optional
+        if config.SHOW_LED_INDICATORS:
+            self.draw_led_indicators(timer_state)
         
         # Draw hint text - only middle mouse button hint
         hint_middle = "Hold middle mouse button while balls rolling"

@@ -1,9 +1,9 @@
 """Configuration for Snooker Shot Clock"""
 
 # Display settings
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
-FULLSCREEN = False  # Set to True for production/Raspberry Pi
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 800
+FULLSCREEN = True  # Set to True for production/Raspberry Pi
 FPS = 60
 
 # Colors
@@ -27,8 +27,16 @@ SHOT_CRITICAL_TIME = 3  # Kritisch bei 3 Sekunden
 
 # GPIO settings (für Raspberry Pi)
 USE_GPIO = False  # Auf True setzen für Raspberry Pi
-# 5 LED Buttons für Countdown-Anzeige (5 Sekunden)
+
+# LED Output Pins (5 LEDs für Countdown-Anzeige)
 LED_PINS = [17, 27, 22, 23, 24]  # GPIO Pins für 5 LEDs
+
+# Button Input Pins (physische Buttons)
+BUTTON_START_PIN = 5   # GPIO Pin für Start Frame Button
+BUTTON_RESET_PIN = 6   # GPIO Pin für Reset Frame Button
+
+# UI settings
+SHOW_LED_INDICATORS = True  # Zeige 5 LED-Kreise in der UI (unabhängig von GPIO)
 
 # Audio settings
 SOUND_ENABLED = True

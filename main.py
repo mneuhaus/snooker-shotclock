@@ -42,7 +42,7 @@ def main():
     ui = UI(screen)
     input_handler = InputHandler(ui, timer_state)
     audio_system = AudioSystem()
-    gpio_control = GPIOControl()
+    gpio_control = GPIOControl(timer_state)  # Pass timer_state for button callbacks
     
     # Main game loop
     clock = pygame.time.Clock()
