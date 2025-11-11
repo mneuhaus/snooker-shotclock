@@ -37,15 +37,44 @@ class AudioSystem:
         if TTS_AVAILABLE and self.enabled:
             try:
                 self.tts_engine = pyttsx3.init()
-                # Set Moira voice (Irish English)
+                
+                # Set voice based on platform
                 voices = self.tts_engine.getProperty('voices')
-                for voice in voices:
-                    if 'moira' in voice.name.lower():
-                        self.tts_engine.setProperty('voice', voice.id)
-                        print(f"TTS voice set to: {voice.name}")
+                voice_set = False
+                
+                # Try to find a good voice (priority order)
+                # macOS: Moira (Irish), Windows: Zira, Linux: English variant
+                voice_preferences = ['moira', 'english', 'en-gb', 'en-us', 'zira']
+                
+                for preference in voice_preferences:
+                    for voice in voices:
+                        if preference in voice.name.lower() or preference in voice.id.lower():
+                            self.tts_engine.setProperty('voice', voice.id)
+                            print(f"TTS voice set to: {voice.name} (ID: {voice.id})")
+                            voice_set = True
+                            break
+                    if voice_set:
                         break
-                self.tts_engine.setProperty('rate', 172)  # Speed (15% faster: 150 * 1.15 = 172.5)
-                print("TTS initialized")
+                
+                if not voice_set and voices:
+                    # Fallback to first available voice
+                    self.tts_engine.setProperty('voice', voices[0].id)
+                    print(f"TTS using default voice: {voices[0].name}")
+                
+                # Set speech rate (words per minute)
+                # espeak on Raspberry Pi uses different scale than macOS
+                try:
+                    current_rate = self.tts_engine.getProperty('rate')
+                    # Increase by 15%
+                    new_rate = int(current_rate * 1.15)
+                    self.tts_engine.setProperty('rate', new_rate)
+                    print(f"TTS rate: {current_rate} → {new_rate} WPM")
+                except:
+                    # Fallback if rate property fails
+                    self.tts_engine.setProperty('rate', 172)
+                    print("TTS rate set to: 172 WPM")
+                
+                print("TTS initialized successfully")
             except Exception as e:
                 print(f"Failed to initialize TTS: {e}")
                 self.tts_engine = None

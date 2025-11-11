@@ -36,7 +36,7 @@ BUTTON_START_PIN = 5   # GPIO Pin für Start Frame Button
 BUTTON_RESET_PIN = 6   # GPIO Pin für Reset Frame Button
 
 # UI settings
-SHOW_LED_INDICATORS = True  # Zeige 5 LED-Kreise in der UI (unabhängig von GPIO)
+SHOW_LED_INDICATORS = False  # Zeige 5 LED-Kreise in der UI (unabhängig von GPIO)
 
 # Audio settings
 SOUND_ENABLED = True
