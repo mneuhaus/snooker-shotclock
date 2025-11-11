@@ -41,3 +41,4 @@ SHOW_LED_INDICATORS = False  # Zeige 5 LED-Kreise in der UI (unabhängig von GPI
 # Audio settings
 SOUND_ENABLED = True
 SOUND_VOLUME = 0.7
+TTS_ENABLED = True  # Text-to-Speech announcements (set False if TTS causes errors)

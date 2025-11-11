@@ -34,32 +34,24 @@ class AudioSystem:
         
         # Initialize TTS
         self.tts_engine = None
-        if TTS_AVAILABLE and self.enabled:
+        if TTS_AVAILABLE and self.enabled and config.TTS_ENABLED:
             try:
                 self.tts_engine = pyttsx3.init()
                 
-                # Set voice based on platform
+                # On Raspberry Pi with espeak, don't try to set voice
+                # Just use default and only configure rate
+                # This avoids the "SetVoiceByName failed" error
+                
+                # List available voices for debugging
                 voices = self.tts_engine.getProperty('voices')
-                voice_set = False
+                if voices:
+                    print(f"TTS: {len(voices)} voices available")
+                    for voice in voices[:3]:  # Show first 3
+                        print(f"  - {voice.name} (ID: {voice.id})")
                 
-                # Try to find a good voice (priority order)
-                # macOS: Moira (Irish), Windows: Zira, Linux: English variant
-                voice_preferences = ['moira', 'english', 'en-gb', 'en-us', 'zira']
-                
-                for preference in voice_preferences:
-                    for voice in voices:
-                        if preference in voice.name.lower() or preference in voice.id.lower():
-                            self.tts_engine.setProperty('voice', voice.id)
-                            print(f"TTS voice set to: {voice.name} (ID: {voice.id})")
-                            voice_set = True
-                            break
-                    if voice_set:
-                        break
-                
-                if not voice_set and voices:
-                    # Fallback to first available voice
-                    self.tts_engine.setProperty('voice', voices[0].id)
-                    print(f"TTS using default voice: {voices[0].name}")
+                # Don't set voice on Linux/Raspberry Pi - use default
+                # Setting voice causes "SetVoiceByName failed" error with espeak
+                print("TTS: Using default system voice (espeak)")
                 
                 # Set speech rate (words per minute)
                 # espeak on Raspberry Pi uses different scale than macOS
@@ -69,10 +61,14 @@ class AudioSystem:
                     new_rate = int(current_rate * 1.15)
                     self.tts_engine.setProperty('rate', new_rate)
                     print(f"TTS rate: {current_rate} → {new_rate} WPM")
-                except:
+                except Exception as e:
                     # Fallback if rate property fails
-                    self.tts_engine.setProperty('rate', 172)
-                    print("TTS rate set to: 172 WPM")
+                    print(f"TTS rate adjustment failed: {e}")
+                    try:
+                        self.tts_engine.setProperty('rate', 175)
+                        print("TTS rate set to: 175 WPM (fallback)")
+                    except:
+                        print("TTS using default rate")
                 
                 print("TTS initialized successfully")
             except Exception as e:

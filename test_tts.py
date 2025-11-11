@@ -60,11 +60,12 @@ def test_tts():
         
         test_message = "15 seconds shot clock now in operation"
         
-        print(f"Testing with first voice: {voices[0].name}")
+        print(f"Using default voice (not setting explicitly to avoid errors)")
         print(f"Message: '{test_message}'")
         print()
         
-        engine.setProperty('voice', voices[0].id)
+        # Don't set voice on Raspberry Pi - causes "SetVoiceByName failed" error
+        # engine.setProperty('voice', voices[0].id)
         
         # Increase rate by 15%
         new_rate = int(rate * 1.15)
