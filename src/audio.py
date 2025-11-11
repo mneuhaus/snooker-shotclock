@@ -2,21 +2,11 @@
 import pygame
 import os
 import math
-import threading
-import subprocess
-import platform
 import config
-
-try:
-    import pyttsx3
-    TTS_AVAILABLE = True
-except ImportError:
-    TTS_AVAILABLE = False
-    print("pyttsx3 not available - TTS disabled")
 
 
 class AudioSystem:
-    """Manages sound effects and text-to-speech"""
+    """Manages sound effects and voice announcements"""
     
     def __init__(self):
         self.enabled = config.SOUND_ENABLED
@@ -33,51 +23,26 @@ class AudioSystem:
             except Exception as e:
                 print(f"Failed to load zonk sound: {e}")
                 self.zonk_sound = None
-        
-        # Initialize TTS
-        self.tts_engine = None
-        self.use_espeak_direct = False  # Fallback to direct espeak calls
-        
-        if TTS_AVAILABLE and self.enabled and config.TTS_ENABLED:
+            
+            # Load voice announcement WAV files
+            announcement_15_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), config.ANNOUNCEMENT_15_SECONDS)
+            announcement_10_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), config.ANNOUNCEMENT_10_SECONDS)
+            
             try:
-                # Try to initialize with espeak driver on Linux
-                if platform.system() == 'Linux':
-                    try:
-                        self.tts_engine = pyttsx3.init('espeak', debug=False)
-                        print("TTS: Initialized with espeak driver")
-                    except Exception as e:
-                        print(f"TTS: espeak driver failed ({e}), using default")
-                        self.tts_engine = pyttsx3.init(debug=False)
-                else:
-                    self.tts_engine = pyttsx3.init(debug=False)
-                
-                # Don't list or set voices - this causes errors on Raspberry Pi
-                print("TTS: Using default system voice")
-                
-                # Set speech rate (words per minute)
-                try:
-                    current_rate = self.tts_engine.getProperty('rate')
-                    new_rate = int(current_rate * 1.15)
-                    self.tts_engine.setProperty('rate', new_rate)
-                    print(f"TTS: Rate set to {new_rate} WPM")
-                except Exception as e:
-                    print(f"TTS: Using default rate ({e})")
-                
-                print("TTS: Initialized successfully")
-                
+                self.announcement_15 = pygame.mixer.Sound(announcement_15_path)
+                self.announcement_15.set_volume(config.SOUND_VOLUME)
+                print(f"15 seconds announcement loaded from {announcement_15_path}")
             except Exception as e:
-                print(f"TTS: pyttsx3 failed ({e})")
-                self.tts_engine = None
-                
-                # Fallback: Check if espeak is available directly
-                if platform.system() == 'Linux':
-                    try:
-                        result = subprocess.run(['which', 'espeak'], capture_output=True)
-                        if result.returncode == 0:
-                            self.use_espeak_direct = True
-                            print("TTS: Falling back to direct espeak calls")
-                    except:
-                        print("TTS: espeak not available")
+                print(f"Failed to load 15 seconds announcement: {e}")
+                self.announcement_15 = None
+            
+            try:
+                self.announcement_10 = pygame.mixer.Sound(announcement_10_path)
+                self.announcement_10.set_volume(config.SOUND_VOLUME)
+                print(f"10 seconds announcement loaded from {announcement_10_path}")
+            except Exception as e:
+                print(f"Failed to load 10 seconds announcement: {e}")
+                self.announcement_10 = None
             
         self.last_second = None  # Track which second we're at for beeps
         self.shot_expired_played = False  # Track if we played the expiry sound
@@ -86,34 +51,16 @@ class AudioSystem:
         self.announced_10s = False  # Track if we announced 10s
         
     def announce_shot_clock(self, seconds):
-        """Announce shot clock time with TTS (run in thread to not block)"""
-        if not self.tts_engine and not self.use_espeak_direct:
+        """Announce shot clock time with WAV file"""
+        if not self.enabled:
             return
             
-        def speak():
-            try:
-                message = f"{seconds} seconds shot clock now in operation"
-                print(f"TTS: {message}")
-                
-                if self.use_espeak_direct:
-                    # Direct espeak call (fallback for Raspberry Pi)
-                    # Use configured voice and speed
-                    subprocess.run(
-                        ['espeak', '-v', config.TTS_VOICE, '-s', str(config.TTS_SPEED), message],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-                else:
-                    # Use pyttsx3
-                    self.tts_engine.say(message)
-                    self.tts_engine.runAndWait()
-                    
-            except Exception as e:
-                print(f"TTS failed: {e}")
+        print(f"Announcement: {seconds} seconds shot clock")
         
-        # Run in thread so it doesn't block the game
-        thread = threading.Thread(target=speak, daemon=True)
-        thread.start()
+        if seconds == 15 and self.announcement_15:
+            self.announcement_15.play()
+        elif seconds == 10 and self.announcement_10:
+            self.announcement_10.play()
     
     def update(self, timer_state):
         """Update audio based on timer state"""
@@ -148,111 +95,62 @@ class AudioSystem:
         # Don't play sounds while balls are rolling
         if timer_state.balls_rolling:
             return
-            
-        shot_time = timer_state.shot_time_remaining
-        current_second = math.ceil(shot_time)
         
-        # Reset expired flag when timer is reset
-        if shot_time > 0 and self.shot_expired_played:
-            self.shot_expired_played = False
+        # Track shot time for tick sounds
+        shot_time = int(timer_state.shot_time_remaining)
+        
+        # Play tick sound every second from 5 to 1
+        if shot_time <= 5 and shot_time >= 1:
+            if self.last_second != shot_time:
+                self._play_tick()
+                self.last_second = shot_time
+        else:
             self.last_second = None
-            
-        # Play zonk sound when timer expires (only once) - CHECK FIRST
+        
+        # Play ZONK when shot timer expires
         if shot_time <= 0 and not self.shot_expired_played:
-            print(f"Timer expired! shot_time={shot_time}, playing zonk")
+            print("Shot time expired! Playing zonk")
             self._play_zonk()
             self.shot_expired_played = True
-            return
-        
-        # Check if we're at a new second for tick sounds
-        if current_second != self.last_second:
-            self.last_second = current_second
-            
-            # Play tick sound every second when <= 5 seconds (but > 0)
-            if 0 < shot_time <= 5:
-                self._play_tick()
-                
+        elif shot_time > 0:
+            self.shot_expired_played = False
+    
     def _play_tick(self):
-        """Play a light tick/beep sound for countdown"""
+        """Play a tick sound (generated)"""
+        if not self.enabled:
+            return
         try:
+            # Generate a short beep sound
             import numpy as np
             sample_rate = 22050
-            duration = 0.1  # Short tick
-            samples = int(sample_rate * duration)
+            duration = 0.1  # 100ms
+            frequency = 800  # Hz
             
-            # Light beep at 800 Hz
-            wave = np.sin(2.0 * np.pi * 800 * np.arange(samples) / sample_rate)
-            # Apply fade out envelope for softer sound
-            envelope = np.linspace(1.0, 0.0, samples)
-            wave = wave * envelope * 0.3  # Lower volume (30%)
+            t = np.linspace(0, duration, int(sample_rate * duration))
+            wave = np.sin(2 * math.pi * frequency * t)
+            
+            # Apply envelope to avoid clicks
+            envelope = np.exp(-t * 20)
+            wave = wave * envelope
+            
+            # Convert to 16-bit integers
             wave = (wave * 32767).astype(np.int16)
             
-            # Convert to stereo
-            stereo_wave = np.zeros((samples, 2), dtype=np.int16)
-            stereo_wave[:, 0] = wave
-            stereo_wave[:, 1] = wave
+            # Create stereo sound (duplicate mono to both channels)
+            stereo_wave = np.column_stack((wave, wave))
             
             sound = pygame.sndarray.make_sound(stereo_wave)
+            sound.set_volume(config.SOUND_VOLUME * 0.3)  # Quieter tick
             sound.play()
         except Exception as e:
-            print(f"Tick playback failed: {e}")
-            
+            pass  # Silently fail if numpy not available
+    
     def _play_zonk(self):
-        """Play the ZONK sound from MP3 file (shortened to 1s)"""
+        """Play the ZONK sound"""
+        if not self.enabled or not self.zonk_sound:
+            return
         try:
-            if self.zonk_sound:
-                print("Playing ZONK sound!")
-                # Play but limit to 1 second
-                self.zonk_sound.play(maxtime=1000)  # maxtime in milliseconds
-            else:
-                print("No zonk sound loaded, using fallback")
-                # Fallback to generated sound if file not available
-                self._play_zonk_fallback()
+            # Play for 1 second max
+            self.zonk_sound.play(maxtime=1000)
         except Exception as e:
-            print(f"Zonk playback failed: {e}")
-            self._play_zonk_fallback()
-            
-    def _play_zonk_fallback(self):
-        """Fallback ZONK sound if MP3 not available"""
-        try:
-            import numpy as np
-            sample_rate = 22050
-            duration = 0.8
-            samples = int(sample_rate * duration)
-            
-            t = np.arange(samples) / sample_rate
-            
-            # Classic "ZONK" - descending frequency buzzer
-            start_freq = 400
-            end_freq = 150
-            freq = start_freq - (start_freq - end_freq) * (t / duration) ** 1.5
-            
-            # Add harmonics for buzzer-like quality
-            wave = np.sin(2.0 * np.pi * freq * t)
-            wave += 0.3 * np.sin(2.0 * np.pi * freq * 2 * t)
-            wave += 0.2 * np.sin(2.0 * np.pi * freq * 3 * t)
-            
-            # Add some noise for "buzziness"
-            noise = np.random.normal(0, 0.05, samples)
-            wave = wave + noise
-            
-            # Envelope
-            envelope = np.ones(samples)
-            attack = int(samples * 0.05)
-            release = int(samples * 0.4)
-            envelope[:attack] = np.linspace(0, 1, attack)
-            envelope[-release:] = np.linspace(1, 0, release)
-            
-            wave = wave * envelope
-            wave = wave / np.max(np.abs(wave))
-            wave = (wave * 32767 * 0.8).astype(np.int16)
-            
-            # Convert to stereo
-            stereo_wave = np.zeros((samples, 2), dtype=np.int16)
-            stereo_wave[:, 0] = wave
-            stereo_wave[:, 1] = wave
-            
-            sound = pygame.sndarray.make_sound(stereo_wave)
-            sound.play()
-        except Exception as e:
-            print(f"Fallback zonk sound failed: {e}")
+            print(f"Failed to play zonk: {e}")

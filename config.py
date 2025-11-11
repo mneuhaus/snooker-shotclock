@@ -41,6 +41,7 @@ SHOW_LED_INDICATORS = False  # LED circles in UI disabled (use physical LEDs)
 # Audio settings
 SOUND_ENABLED = True  # Sound effects enabled
 SOUND_VOLUME = 0.7   # Volume level (0.0 - 1.0)
-TTS_ENABLED = True   # Text-to-Speech announcements (espeak on Raspberry Pi)
-TTS_VOICE = 'en-gb+f2'  # espeak voice: en-gb+f2 (female professional, not too high)
-TTS_SPEED = 170      # Speech rate: slower, more professional (150-200 recommended)
+
+# Voice announcements (WAV files)
+ANNOUNCEMENT_15_SECONDS = 'assets/sounds/15_seconds.wav'  # "15 seconds shot clock now in operation"
+ANNOUNCEMENT_10_SECONDS = 'assets/sounds/10_seconds.wav'  # "10 seconds shot clock now in operation"
